@@ -19,6 +19,7 @@ import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import AppsIcon from "@mui/icons-material/Apps";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
+import { images } from "../Assets/assets";
 
 const DRAWER_WIDTH = 70;
 
@@ -83,7 +84,7 @@ const MenuItemButton = styled(ListItem)({
 
 const menuItems = [
   { name: "Templates", icon: <AutoAwesomeMosaicIcon />, expanded: false },
-  { name: "Elements", icon: <AddReactionIcon />, expanded: false },
+  { name: "Elements", icon: <AddReactionIcon />, expanded: true },
   { name: "Text", icon: <RttIcon />, expanded: false },
   { name: "Brands", icon: <RecentActorsIcon />, expanded: false },
   { name: "Uploads", icon: <CloudUploadIcon />, expanded: false },
@@ -101,6 +102,10 @@ const Sidebar = () => {
 
   const handleExpandClose = () => {
     setExpandedItem(null);
+  };
+
+  const handleDragStart = (event, src) => {
+    event.dataTransfer.setData("text/plain", src);
   };
 
   const drawerWidth = expandedItem !== null ? DRAWER_WIDTH + 400 : DRAWER_WIDTH;
@@ -173,11 +178,26 @@ const Sidebar = () => {
                   </Box>
                 </Tooltip>
                 <ExpandedContent
-                  style={{ display: "flex", justifyContent: "center" }}
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    flexWrap: "wrap",
+                  }}
                 >
-                  <Typography style={{ color: "white" }}>
-                    Expanded window content for {item.name}
-                  </Typography>
+                  {item.name === "Elements" && images.map((image, i) => (
+                    <div
+                      key={i}
+                      style={{ padding: "5px" }}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, image)}
+                    >
+                      <img
+                        src={image}
+                        alt={`Element ${i + 1}`}
+                        style={{ width: "auto", height: "100px", cursor: "move" }}
+                      />
+                    </div>
+                  ))}
                 </ExpandedContent>
               </ExpandedWindow>
             )}
