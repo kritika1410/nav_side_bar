@@ -4,12 +4,6 @@ import Canvas from "./Canvas/Canvas";
 import Sidebar from "./components/Sidabar";
 
 const App = () => {
-  const draw = (context) => {
-    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    context.fillStyle = "grey";
-    context.fillRect(10, 10, 100, 100);
-  };
-
   return (
     <div style={{ display: "flex" }}>
       <CssBaseline />
@@ -24,7 +18,7 @@ const App = () => {
             border: "5px solid black",
           }}
         >
-          <Canvas draw={draw} width={1200} height={800} />
+          <Canvas width={1200} height={800} />
         </Box>
       </Box>
     </div>

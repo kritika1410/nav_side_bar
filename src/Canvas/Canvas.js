@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 
-const Canvas = ({ draw, width, height }) => {
+const Canvas = ({ width, height }) => {
   const canvasRef = useRef(null);
 
   const handleDrop = (event) => {
