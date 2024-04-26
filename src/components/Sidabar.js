@@ -6,6 +6,7 @@ import {
   ListItem,
   ListItemIcon,
   Typography,
+  Tooltip,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AutoAwesomeMosaicIcon from "@mui/icons-material/AutoAwesomeMosaic";
@@ -71,6 +72,15 @@ const ExpandedContent = styled("div")({
   overflowY: "auto",
 });
 
+const MenuItemButton = styled(ListItem)({
+  "&:hover": {
+    color: "#fff",
+    "& .MuiTypography-root, & .MuiSvgIcon-root": {
+      color: "#fff",
+    },
+  },
+});
+
 const menuItems = [
   { name: "Templates", icon: <AutoAwesomeMosaicIcon />, expanded: false },
   { name: "Elements", icon: <AddReactionIcon />, expanded: false },
@@ -100,14 +110,12 @@ const Sidebar = () => {
       <List>
         {menuItems.map((item, index) => (
           <React.Fragment key={index}>
-            <ListItem
+            <MenuItemButton
               sx={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 padding: "8px",
-                backgroundColor:
-                  expandedItem === index ? "#252627" : "transparent",
                 cursor: "pointer",
                 position: "relative",
               }}
@@ -134,32 +142,36 @@ const Sidebar = () => {
               >
                 {item.name}
               </Typography>
-            </ListItem>
+            </MenuItemButton>
             {expandedItem === index && (
               <ExpandedWindow style={{ padding: "20px", width: "400px" }}>
                 <SearchContainer>
                   <SearchIconWrapper />
                   <SearchBar type="text" placeholder="Search..." />
                 </SearchContainer>
-                <Box
+                <Tooltip title="Close" arrow>
+                  <Box
                     style={{
-                        position: "absolute",
-                        top: "50%",
-                        right: "-14px",
-                        transform: "translateY(-50%)",
-                        cursor: "pointer",
-                        color: "#fff",
-                        backgroundColor: '#18191B',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        padding: '30px 0px',
-                        borderRadius: '0px 30px 30px 0px',
+                      position: "absolute",
+                      top: "50%",
+                      right: "-14px",
+                      transform: "translateY(-50%)",
+                      cursor: "pointer",
+                      color: "#fff",
+                      backgroundColor: "#18191B",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      padding: "30px 0px",
+                      borderRadius: "0px 30px 30px 0px",
                     }}
                     onClick={handleExpandClose}
-                >
-                  <ArrowBackIosIcon style={{ fontSize: '14px', paddingLeft: '3px' }} />
-                </Box>
+                  >
+                    <ArrowBackIosIcon
+                      style={{ fontSize: "14px", paddingLeft: "3px" }}
+                    />
+                  </Box>
+                </Tooltip>
                 <ExpandedContent
                   style={{ display: "flex", justifyContent: "center" }}
                 >
