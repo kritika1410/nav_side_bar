@@ -4,6 +4,12 @@ const Canvas = ({ width, height }) => {
   const canvasRef = useRef(null);
   const [text, setText] = useState("");
   const [textElements, setTextElements] = useState([]);
+  const [images, setImages] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [canvasOffsetX, setCanvasOffsetX] = useState(0);
+  const [canvasOffsetY, setCanvasOffsetY] = useState(0);
 
   const handleDrop = (event) => {
     event.preventDefault();
@@ -14,17 +20,12 @@ const Canvas = ({ width, height }) => {
       addTextBox(offsetX, offsetY);
     } else {
       const { offsetX, offsetY } = getCanvasOffset(event);
-      drawImage(data, offsetX, offsetY);
+      addImage(data, offsetX, offsetY);
     }
   };
 
-  const drawImage = (src, x, y) => {
-    const context = canvasRef.current.getContext("2d");
-    const image = new Image();
-    image.src = src;
-    image.onload = () => {
-      context.drawImage(image, x, y, 150, 150);
-    };
+  const addImage = (src, x, y) => {
+    setImages([...images, { src, x, y }]);
   };
 
   const handleDragOver = (event) => {
@@ -70,16 +71,67 @@ const Canvas = ({ width, height }) => {
     setText(event.target.value);
   };
 
+  const handleMouseDown = (event) => {
+    setIsDragging(true);
+    setDragStartX(event.clientX);
+    setDragStartY(event.clientY);
+  };
+
+  const handleMouseMove = (event) => {
+    if (isDragging) {
+      const offsetX = event.clientX - dragStartX;
+      const offsetY = event.clientY - dragStartY;
+      setCanvasOffsetX(canvasOffsetX + offsetX);
+      setCanvasOffsetY(canvasOffsetY + offsetY);
+      setDragStartX(event.clientX);
+      setDragStartY(event.clientY);
+      redrawCanvas();
+    }
+  };
+  
+  const redrawCanvas = () => {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, width, height);
+    
+    textElements.forEach(({ text, x, y }) => {
+      context.font = "30px Arial";
+      context.fillStyle = "#000000";
+      context.fillText(text, x + canvasOffsetX, y + canvasOffsetY);
+    });
+  
+    images.forEach(({ src, x, y }) => {
+      const image = new Image();
+      image.src = src;
+      image.onload = () => {
+        context.drawImage(image, x + canvasOffsetX, y + canvasOffsetY, 150, 150);
+      };
+    });
+  };  
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
   useEffect(() => {
-    const context = canvasRef.current.getContext("2d");
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
     context.clearRect(0, 0, width, height);
 
     textElements.forEach(({ text, x, y }) => {
       context.font = "30px Arial";
       context.fillStyle = "#000000";
-      context.fillText(text, x, y);
+      context.fillText(text, x + canvasOffsetX, y + canvasOffsetY);
     });
-  }, [text, width, height, textElements]);
+
+    images.forEach(({ src, x, y }) => {
+      const image = new Image();
+      image.src = src;
+      image.onload = () => {
+        context.drawImage(image, x + canvasOffsetX, y + canvasOffsetY, 150, 150);
+      };
+    });
+  }, [text, width, height, textElements, images, canvasOffsetX, canvasOffsetY]);
 
   const submitText = (text, x, y) => {
     setTextElements([...textElements, { text, x, y }]);
@@ -90,6 +142,9 @@ const Canvas = ({ width, height }) => {
       ref={canvasRef}
       width={width}
       height={height}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       style={{ border: "2px solid black" }}
