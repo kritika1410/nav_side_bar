@@ -20,6 +20,7 @@ import AppsIcon from "@mui/icons-material/Apps";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import { images } from "../Assets/assets";
+import FormatShapesIcon from "@mui/icons-material/FormatShapes";
 
 const DRAWER_WIDTH = 70;
 
@@ -184,20 +185,42 @@ const Sidebar = () => {
                     flexWrap: "wrap",
                   }}
                 >
-                  {item.name === "Elements" && images.map((image, i) => (
+                  {item.name === "Elements" &&
+                    images.map((image, i) => (
+                      <div
+                        key={i}
+                        style={{ padding: "5px" }}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, image)}
+                      >
+                        <img
+                          src={image}
+                          alt={`Element ${i + 1}`}
+                          style={{
+                            width: "auto",
+                            height: "100px",
+                            cursor: "move",
+                          }}
+                        />
+                      </div>
+                    ))}
+
+                  {item.name === "Text" && (
                     <div
-                      key={i}
                       style={{ padding: "5px" }}
                       draggable
-                      onDragStart={(e) => handleDragStart(e, image)}
+                      onDragStart={(e) => handleDragStart(e, "textbox")}
                     >
-                      <img
-                        src={image}
-                        alt={`Element ${i + 1}`}
-                        style={{ width: "auto", height: "100px", cursor: "move" }}
+                      <FormatShapesIcon
+                        style={{
+                          width: "auto",
+                          height: "100px",
+                          cursor: "move",
+                          color: "#fff",
+                        }}
                       />
                     </div>
-                  ))}
+                  )}
                 </ExpandedContent>
               </ExpandedWindow>
             )}

@@ -15,7 +15,6 @@ const App = () => {
             justifyContent: "center",
             alignItems: "center",
             height: "100%",
-            border: "5px solid black",
           }}
         >
           <Canvas width={1200} height={800} />
