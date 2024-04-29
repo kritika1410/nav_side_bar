@@ -2,8 +2,8 @@ import React, { useRef, useState, useEffect } from "react";
 
 const Canvas = ({ width, height }) => {
   const canvasRef = useRef(null);
-  const [text, setText] = useState("");
   const [textElements, setTextElements] = useState([]);
+  const [selectedTextIndex, setSelectedTextIndex] = useState(null);
   const [images, setImages] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
@@ -11,11 +11,49 @@ const Canvas = ({ width, height }) => {
   const [canvasOffsetX, setCanvasOffsetX] = useState(0);
   const [canvasOffsetY, setCanvasOffsetY] = useState(0);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, width, height);
+
+    textElements.forEach(({ text, x, y }, index) => {
+      context.font = "30px Arial";
+      context.fillStyle = selectedTextIndex === index ? "#FF0000" : "#000000";
+      context.fillText(text, x + canvasOffsetX, y + canvasOffsetY);
+    });
+
+    images.forEach(({ src, x, y }) => {
+      const image = new Image();
+      image.src = src;
+      image.onload = () => {
+        context.drawImage(
+          image,
+          x + canvasOffsetX,
+          y + canvasOffsetY,
+          150,
+          150
+        );
+      };
+    });
+  }, [
+    textElements,
+    images,
+    canvasOffsetX,
+    canvasOffsetY,
+    selectedTextIndex,
+    width,
+    height,
+  ]);
+
+  const clearSelection = () => {
+    setSelectedTextIndex(null);
+    removeExistingInput();
+  };
+
   const handleDrop = (event) => {
     event.preventDefault();
     const data = event.dataTransfer.getData("text/plain");
-    if (data === "text") {
-    } else if (data === "textbox") {
+    if (data === "textbox") {
       const { offsetX, offsetY } = getCanvasOffset(event);
       addTextBox(offsetX, offsetY);
     } else {
@@ -54,7 +92,6 @@ const Canvas = ({ width, height }) => {
     input.style.background = "#FFFFFF";
     input.style.zIndex = "100";
     input.placeholder = "Type something...";
-    input.addEventListener("input", handleInputChange);
 
     input.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
@@ -67,14 +104,38 @@ const Canvas = ({ width, height }) => {
     input.focus();
   };
 
-  const handleInputChange = (event) => {
-    setText(event.target.value);
-  };
-
   const handleMouseDown = (event) => {
-    setIsDragging(true);
-    setDragStartX(event.clientX);
-    setDragStartY(event.clientY);
+    const offsetX =
+      event.clientX - canvasRef.current.getBoundingClientRect().left;
+    const offsetY =
+      event.clientY - canvasRef.current.getBoundingClientRect().top;
+
+    let found = false;
+    textElements.some((textElement, index) => {
+      const { x, y, text } = textElement;
+      const textWidth = canvasRef.current
+        .getContext("2d")
+        .measureText(text).width;
+      const textHeight = 30;
+
+      if (
+        offsetX >= x + canvasOffsetX &&
+        offsetX <= x + canvasOffsetX + textWidth &&
+        offsetY >= y + canvasOffsetY - textHeight &&
+        offsetY <= y + canvasOffsetY
+      ) {
+        selectText(index);
+        found = true;
+        return true;
+      }
+      return false;
+    });
+
+    if (!found) {
+      setIsDragging(true);
+      setDragStartX(event.clientX);
+      setDragStartY(event.clientY);
+    }
   };
 
   const handleMouseMove = (event) => {
@@ -85,56 +146,108 @@ const Canvas = ({ width, height }) => {
       setCanvasOffsetY(canvasOffsetY + offsetY);
       setDragStartX(event.clientX);
       setDragStartY(event.clientY);
-      redrawCanvas();
     }
   };
-  
-  const redrawCanvas = () => {
-    const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-    context.clearRect(0, 0, width, height);
-    
-    textElements.forEach(({ text, x, y }) => {
-      context.font = "30px Arial";
-      context.fillStyle = "#000000";
-      context.fillText(text, x + canvasOffsetX, y + canvasOffsetY);
-    });
-  
-    images.forEach(({ src, x, y }) => {
-      const image = new Image();
-      image.src = src;
-      image.onload = () => {
-        context.drawImage(image, x + canvasOffsetX, y + canvasOffsetY, 150, 150);
-      };
-    });
-  };  
 
   const handleMouseUp = () => {
     setIsDragging(false);
   };
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-    context.clearRect(0, 0, width, height);
+  const handleCanvasClick = (event) => {
+    const offsetX =
+      event.clientX - canvasRef.current.getBoundingClientRect().left;
+    const offsetY =
+      event.clientY - canvasRef.current.getBoundingClientRect().top;
 
-    textElements.forEach(({ text, x, y }) => {
-      context.font = "30px Arial";
-      context.fillStyle = "#000000";
-      context.fillText(text, x + canvasOffsetX, y + canvasOffsetY);
+    let found = false;
+    textElements.some((textElement, index) => {
+      const { text, x, y } = textElement;
+      const textWidth = canvasRef.current
+        .getContext("2d")
+        .measureText(text).width;
+      const textHeight = 30;
+
+      if (
+        offsetX >= x + canvasOffsetX &&
+        offsetX <= x + canvasOffsetX + textWidth &&
+        offsetY >= y + canvasOffsetY - textHeight &&
+        offsetY <= y + canvasOffsetY
+      ) {
+        selectText(index);
+        found = true;
+        return true;
+      }
+      return false;
     });
 
-    images.forEach(({ src, x, y }) => {
-      const image = new Image();
-      image.src = src;
-      image.onload = () => {
-        context.drawImage(image, x + canvasOffsetX, y + canvasOffsetY, 150, 150);
-      };
-    });
-  }, [text, width, height, textElements, images, canvasOffsetX, canvasOffsetY]);
+    if (!found) {
+      clearSelection();
+    }
+  };
+
+  const selectText = (index) => {
+    setSelectedTextIndex(index);
+    handleTextClick(index);
+  };
+
+  const handleTextClick = (index) => {
+    setSelectedTextIndex(index);
+    const selectedText = textElements[index];
+
+    removeExistingInput();
+
+    const canvasRect = canvasRef.current.getBoundingClientRect();
+    const input = document.createElement("input");
+    input.type = "text";
+    input.id = "text-input";
+    input.style.position = "absolute";
+    input.style.left = `${canvasRect.left + selectedText.x + canvasOffsetX}px`;
+    input.style.top = `${canvasRect.top + selectedText.y + canvasOffsetY}px`;
+    input.style.border = "2px solid #000000";
+    input.style.padding = "5px";
+    input.style.outline = "none";
+    input.style.fontFamily = "Arial";
+    input.style.fontSize = "30px";
+    input.style.color = "#000000";
+    input.style.background = "#FFFFFF";
+    input.style.zIndex = "100";
+    input.value = selectedText.text;
+    input.addEventListener("keydown", (event) =>
+      handleInputKeyDown(event, index)
+    );
+    document.body.appendChild(input);
+    input.focus();
+  };
+
+  const handleInputKeyDown = (event, index) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submitEditedText(index, event.target.value);
+    }
+  };
+
+  const submitEditedText = (index, newText) => {
+    if (selectedTextIndex !== null) {
+      setTextElements((prevTextElements) =>
+        prevTextElements.map((item, idx) =>
+          idx === index ? { ...item, text: newText } : item
+        )
+      );
+      clearSelection();
+    }
+  };
+
+  const removeExistingInput = () => {
+    const existingInput = document.getElementById("text-input");
+    if (existingInput) {
+      existingInput.removeEventListener("keydown", handleInputKeyDown);
+      document.body.removeChild(existingInput);
+    }
+  };
 
   const submitText = (text, x, y) => {
     setTextElements([...textElements, { text, x, y }]);
+    removeExistingInput();
   };
 
   return (
@@ -147,6 +260,7 @@ const Canvas = ({ width, height }) => {
       onMouseUp={handleMouseUp}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
+      onClick={handleCanvasClick}
       style={{ border: "2px solid black" }}
     />
   );
